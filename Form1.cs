@@ -21,7 +21,7 @@ namespace ScaleTo16x16
         }
         public string[] Paths = { };
         public Dictionary<string, string> Hashes = new Dictionary<string, string>();
-        public int DimensionScale = 32;
+        public int DimensionScale = 64;
         private void button2_Click(object sender, EventArgs e)
         {
             /*OpenFileDialog ofd = new OpenFileDialog();
@@ -59,36 +59,39 @@ namespace ScaleTo16x16
             return paths;
         }
 
-        private void SetFingerPrintsIntoDictionary()
+        private Task<string> SetFingerPrintsIntoDictionary()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            string TempHash = "";
-            /*for (int i = 0; i < Paths.Length; i++)
+            return Task.Run(() =>
             {
-                TempHash = SetBlackAndWhite(Paths[i]);
-                Hashes.Add(Paths[i], TempHash);
-            }*/
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
 
-            Parallel.For(0, Paths.Length, i =>
-            {
-                TempHash = SetBlackAndWhite(Paths[i]);
-                Hashes.Add(Paths[i], TempHash);
+                string TempHash = "";
+                /*for (int i = 0; i < Paths.Length; i++)
+                {
+                    TempHash = SetBlackAndWhite(Paths[i]);
+                    Hashes.Add(Paths[i], TempHash);
+                }*/
+
+                Parallel.For(0, Paths.Length, i =>
+                {
+                    TempHash = SetBlackAndWhite(Paths[i]);
+                    Hashes.Add(Paths[i], TempHash);
+                });
+
+                stopWatch.Stop();
+                TimeSpan ts = stopWatch.Elapsed;
+
+                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                ts.Hours, ts.Minutes, ts.Seconds,
+                ts.Milliseconds / 10);
+                return elapsedTime.ToString();
             });
-
-            stopWatch.Stop();
-            TimeSpan ts = stopWatch.Elapsed;
-
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-            ts.Hours, ts.Minutes, ts.Seconds,
-            ts.Milliseconds / 10);
-            Hash_label.Text = elapsedTime;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        async private void button1_Click(object sender, EventArgs e)
         {
-            SetFingerPrintsIntoDictionary();
+            Hash_label.Text = await SetFingerPrintsIntoDictionary();
             CompareFingerPrints();
         }
 
@@ -100,7 +103,7 @@ namespace ScaleTo16x16
             Color pixel;
             
             string TempHash = "";
-            
+            Console.WriteLine("nyan");
             for (int y = 0; y < BlackAndWhiteImage.Width; y++)
             {
                 for(int x = 0; x < BlackAndWhiteImage.Height; x++)
@@ -122,13 +125,14 @@ namespace ScaleTo16x16
                     {
                         TempHash += "0";
                     }
+                    
                 }
             }
             
             return TempHash;
         }
 
-        private void CompareFingerPrints()
+        async private void CompareFingerPrints()
         {
             /*int i = 0, j = 1;
             while(i < Hashes.Count - 1)
@@ -144,9 +148,10 @@ namespace ScaleTo16x16
             {
                 for(int j = J; j < Hashes.Count; j++)
                 {
-                    bool isSimilar = AnotherCompareFunc(Hashes.ElementAt(i).Value, Hashes.ElementAt(j).Value);
-                    
-                    if(isSimilar == true)
+                    bool isSimilar = await AnotherCompareFunc(Hashes.ElementAt(i).Value, Hashes.ElementAt(j).Value);
+
+                    Console.WriteLine("meow");
+                    if (isSimilar == true)
                     {
                         string[] TemplviItem = { Path.GetFileName(Hashes.ElementAt(i).Key), Path.GetFileName(Hashes.ElementAt(j).Key) };
                         ListViewItem lvi = new ListViewItem(TemplviItem);
@@ -157,21 +162,35 @@ namespace ScaleTo16x16
             }
         }
 
-        private bool AnotherCompareFunc(string firstHash, string secondHash)
+        private Task<bool> AnotherCompareFunc(string firstHash, string secondHash)
         {
-            int DiffCount = 0;
-            for (int i = 0; i < DimensionScale * DimensionScale; i++)
+            return Task.Run(() =>
             {
-                if(DiffCount > 50)
+                int DiffCount = 0;
+                return Parallel.For(0, DimensionScale * DimensionScale, (i, pls) =>
                 {
-                    return false;
-                }
-                if(firstHash[i] != secondHash[i])
+                    if (DiffCount > 50)
+                    {
+                        pls.Break();
+                    }
+                    if (firstHash[i] != secondHash[i])
+                    {
+                        DiffCount++;
+                    }
+                }).IsCompleted;
+                /*for (int i = 0; i < DimensionScale * DimensionScale; i++)
                 {
-                    DiffCount++;
-                }
-            }
-            return true;
+                    if (DiffCount > 50)
+                    {
+                        return false;
+                    }
+                    if (firstHash[i] != secondHash[i])
+                    {
+                        DiffCount++;
+                    }
+                }*/
+                return true;
+            });
         }
     }
 }
