@@ -43,6 +43,11 @@
             this.listView1 = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.label4 = new System.Windows.Forms.Label();
+            this.FolderLabel = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.Orig_pb)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DownScaled_pb)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ReducedColours_pb)).BeginInit();
@@ -78,11 +83,11 @@
             // Hash_label
             // 
             this.Hash_label.AutoSize = true;
-            this.Hash_label.Location = new System.Drawing.Point(497, 585);
+            this.Hash_label.Location = new System.Drawing.Point(449, 601);
             this.Hash_label.Name = "Hash_label";
-            this.Hash_label.Size = new System.Drawing.Size(35, 13);
+            this.Hash_label.Size = new System.Drawing.Size(62, 13);
             this.Hash_label.TabIndex = 5;
-            this.Hash_label.Text = "label1";
+            this.Hash_label.Text = "FingerLabel";
             // 
             // label1
             // 
@@ -150,11 +155,11 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(298, 585);
+            this.label3.Location = new System.Drawing.Point(517, 601);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(35, 13);
+            this.label3.Size = new System.Drawing.Size(98, 13);
             this.label3.TabIndex = 16;
-            this.label3.Text = "label1";
+            this.label3.Text = "LightCompareLabel";
             // 
             // listView1
             // 
@@ -180,11 +185,60 @@
             this.columnHeader2.Text = "SecondImage";
             this.columnHeader2.Width = 112;
             // 
+            // progressBar1
+            // 
+            this.progressBar1.Location = new System.Drawing.Point(12, 579);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(277, 23);
+            this.progressBar1.TabIndex = 18;
+            this.progressBar1.Visible = false;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(725, 601);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(63, 13);
+            this.label4.TabIndex = 19;
+            this.label4.Text = "ResultLabel";
+            // 
+            // FolderLabel
+            // 
+            this.FolderLabel.AutoSize = true;
+            this.FolderLabel.Location = new System.Drawing.Point(381, 601);
+            this.FolderLabel.Name = "FolderLabel";
+            this.FolderLabel.Size = new System.Drawing.Size(62, 13);
+            this.FolderLabel.TabIndex = 20;
+            this.FolderLabel.Text = "FolderLabel";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(621, 601);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(98, 13);
+            this.label7.TabIndex = 21;
+            this.label7.Text = "DarkCompareLabel";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(12, 530);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(37, 13);
+            this.label8.TabIndex = 22;
+            this.label8.Text = "Status";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(851, 607);
+            this.ClientSize = new System.Drawing.Size(851, 623);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.FolderLabel);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.listView1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.textBox1);
@@ -225,6 +279,11 @@
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label FolderLabel;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
     }
 }
 
