@@ -20,13 +20,14 @@ namespace ScaleTo16x16
         {
             InitializeComponent();
         }
-        public string[] Paths = { };
-        public Dictionary<string, string> LightHashes = new Dictionary<string, string>();
-        public Dictionary<string, string> DarkHashes = new Dictionary<string, string>();
+        public string[] Paths;
+        public string FolderPath;
+        public Dictionary<string, string[]> LightHashes = new Dictionary<string, string[]>();
+        public Dictionary<string, string[]> DarkHashes = new Dictionary<string, string[]>();
         /*public List<KeyValuePair<string, string>> Matches = new List<KeyValuePair<string, string>>();*/
         public Dictionary<string, string> Matches = new Dictionary<string, string>();
         public int DimensionScale = 32;
-        public int ReducedDimensionScale = 8;
+        public int ReducedDimensionScale = 16;
 
         private void ClearTemp()
         {
@@ -43,6 +44,7 @@ namespace ScaleTo16x16
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 ClearTemp();
+                FolderPath = fbd.SelectedPath;
                 FolderLabel.Text = await GetAllImagesPaths(fbd.SelectedPath);
                 progressBar1.Minimum = 0;
                 progressBar1.Maximum = Paths.Length;
@@ -54,8 +56,13 @@ namespace ScaleTo16x16
         {
             progressBar1.Visible = true;
             Hash_label.Text = await SetFingerPrintsIntoDictionary();
-            CompareLightFingerPrints();
-            CompareDarkFingerPrints();
+            await Task.Run(() =>
+             {
+                 CompareLightFingerPrints();
+                 CompareDarkFingerPrints();
+             });
+            
+            SetMatchesIntoLV();
         }
 
         async private Task<string> GetAllImagesPaths(string folderName)
@@ -65,6 +72,10 @@ namespace ScaleTo16x16
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
 
+                this.BeginInvoke((ThreadStart)delegate ()
+                {
+                    label8.Text = "Getting Images Paths";
+                });
                 var IEpaths = Directory.GetFiles(folderName, "*.*").AsParallel(). // search of typical image formats using lynq
                  Where(s => s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                  s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
@@ -78,11 +89,11 @@ namespace ScaleTo16x16
                 stopWatch.Stop();
                 TimeSpan ts = stopWatch.Elapsed;
 
-                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                 ts.Hours, ts.Minutes, ts.Seconds,
                 ts.Milliseconds / 10);
                 return elapsedTime.ToString();
-            });
+            }).ConfigureAwait(false);
         }
 
         private Task<string> SetFingerPrintsIntoDictionary()
@@ -92,17 +103,23 @@ namespace ScaleTo16x16
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
                 bool isDark;
-                string TempHash = "";
+                string LittleTempHash = "";
+                string MiddleTempHash = "";
+                this.BeginInvoke((ThreadStart)delegate ()
+                {
+                    label8.Text = "Setting Image Hash Into Dictionary";
+                });
                 Parallel.For(0, Paths.Length, i =>
                 {
-                    (TempHash, isDark) = SetBlackAndWhite(Paths[i]);
-                    if(isDark)
+                    (LittleTempHash , MiddleTempHash, isDark) = SetBlackAndWhite(Paths[i]);
+                    
+                    if (isDark)
                     {
-                        DarkHashes.Add(Paths[i], TempHash);
+                        DarkHashes.Add(Paths[i], new[] { LittleTempHash , MiddleTempHash});
                     }
                     else
                     {
-                        LightHashes.Add(Paths[i], TempHash);
+                        LightHashes.Add(Paths[i], new[] { LittleTempHash, MiddleTempHash });
                     }
                     UpdateProgressBar();
                 });
@@ -132,7 +149,7 @@ namespace ScaleTo16x16
             });
         }
 
-        private (string, bool) SetBlackAndWhite(string path) 
+        private (string, string, bool) SetBlackAndWhite(string path) 
         {
             Bitmap Temp = new Bitmap(path);
             Bitmap MiddleSizedImage = new Bitmap(Temp, new Size(DimensionScale, DimensionScale));
@@ -146,12 +163,51 @@ namespace ScaleTo16x16
             Temp.Dispose();
             Color pixel;
             
-            string TempHash = "";
+            string MiddleTempHash = "";
+            string LittleTempHash = "";
+
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label8.Text = "Setting Image Hash";
+            });
+
+            for (int y = 0; y < MiddleSizedImage.Height; y++)
+            {
+                for (int x = 0; x < MiddleSizedImage.Width; x++)
+                {
+                    
+                    
+                    pixel = MiddleSizedImage.GetPixel(x, y);
+
+                    int r = pixel.R;
+                    int g = pixel.G;
+                    int b = pixel.B;
+                    int avg = (r + g + b) / 3;
+
+                    if (avg > overallAvg)
+                    {
+                        MiddleTempHash += "1";
+                    }
+                    else
+                    {
+                        MiddleTempHash += "0";
+                    }
+
+                }
+            }
+            MiddleSizedImage.Dispose();
+
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label8.Text = "Setting Image Hash";
+            });
 
             for (int y = 0; y < SmallerImage.Height; y++)
             {
                 for(int x = 0; x < SmallerImage.Width; x++)
                 {
+                    
+                    
                     pixel = SmallerImage.GetPixel(x, y);
                     
                     int r = pixel.R;
@@ -161,17 +217,17 @@ namespace ScaleTo16x16
 
                     if (avg > overallAvg)
                     {
-                        TempHash += "1";
+                        LittleTempHash += "1";
                     }
                     else
                     {
-                        TempHash += "0";
+                        LittleTempHash += "0";
                     }
                     
                 }
             }
             SmallerImage.Dispose();
-            return (TempHash, isDark);
+            return (LittleTempHash, MiddleTempHash, isDark);
         }
 
         private int GetAvgImageColor(Bitmap image)
@@ -199,8 +255,14 @@ namespace ScaleTo16x16
         private Bitmap ReduceImageScale(Bitmap MiddleSizedImage)
         {
             Bitmap newImage = new Bitmap(MiddleSizedImage);
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label8.Text = "Reducing Image Size";
+            });
             while (newImage.Width > ReducedDimensionScale)
             {
+                
+                
                 newImage = SuperReduced(newImage);
             }
             return newImage;
@@ -242,11 +304,23 @@ namespace ScaleTo16x16
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             int J = 1;
-            for(int i = 0; i < LightHashes.Count - 1; i++)
+
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label8.Text = "Comparing Light Fingers";
+            });
+
+            for (int i = 0; i < LightHashes.Count - 1; i++)
             {
                 for(int j = J; j < LightHashes.Count; j++)
                 {
-                    bool isSimilar = await AnotherCompareFunc(LightHashes.ElementAt(i).Value, LightHashes.ElementAt(j).Value);
+                    
+                    
+                    bool isSimilar = await FastCompareFunc(LightHashes.ElementAt(i).Value[0], LightHashes.ElementAt(j).Value[0]).ConfigureAwait(false);
+                    if(isSimilar == true)
+                    {
+                        isSimilar = await SlowCompareFunc(LightHashes.ElementAt(i).Value[1], LightHashes.ElementAt(j).Value[1]).ConfigureAwait(false);
+                    }
                     UpdateProgressBar();
                     if (isSimilar == true)
                     {
@@ -257,7 +331,7 @@ namespace ScaleTo16x16
                         }
                         catch
                         {
-
+                            
                         }
                     }
                 }
@@ -267,9 +341,10 @@ namespace ScaleTo16x16
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                 ts.Hours, ts.Minutes, ts.Seconds,
                 ts.Milliseconds / 10);
-            label3.Text = elapsedTime;
-            SetMatchesIntoLV();
-            
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label3.Text = elapsedTime;
+            });
         }
 
         async private void CompareDarkFingerPrints()
@@ -277,13 +352,27 @@ namespace ScaleTo16x16
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             int J = 1;
+
+            this.BeginInvoke((ThreadStart)delegate ()
+            {
+                label8.Text = "Comparing Dark Fingers";
+            });
+
             for (int i = 0; i < DarkHashes.Count - 1; i++)
             {
                 for (int j = J; j < DarkHashes.Count; j++)
                 {
-                    label8.Text = "Comparing Light Fingers";
-                    bool isSimilar = await AnotherCompareFunc(DarkHashes.ElementAt(i).Value, DarkHashes.ElementAt(j).Value);
+                    
+                    
+
+                    bool isSimilar = await FastCompareFunc(DarkHashes.ElementAt(i).Value[0], DarkHashes.ElementAt(j).Value[0]);
+                    if (isSimilar == true)
+                    {
+                        isSimilar = await SlowCompareFunc(DarkHashes.ElementAt(i).Value[1], DarkHashes.ElementAt(j).Value[1]);
+                    }
+
                     UpdateProgressBar();
+
                     if (isSimilar == true)
                     {
                         /*Matches.Add(new KeyValuePair<string, string>(Path.GetFileName(Hashes.ElementAt(i).Key), Path.GetFileName(Hashes.ElementAt(j).Key)));*/
@@ -304,10 +393,9 @@ namespace ScaleTo16x16
                 ts.Hours, ts.Minutes, ts.Seconds,
                 ts.Milliseconds / 10);
             label7.Text = elapsedTime;
-            SetMatchesIntoLV();
         }
 
-        private Task<bool> AnotherCompareFunc(string firstHash, string secondHash)
+        private Task<bool> FastCompareFunc(string firstHash, string secondHash)
         {
             return Task.Run(() =>
             {
@@ -326,6 +414,25 @@ namespace ScaleTo16x16
             });
         }
 
+        private Task<bool> SlowCompareFunc(string firstHash, string secondHash)
+        {
+            return Task.Run(() =>
+            {
+                int DiffCount = 0;
+                return Parallel.For(0, DimensionScale * DimensionScale, (i, pls) =>
+                {
+                    if (firstHash[i] != secondHash[i])
+                    {
+                        ++DiffCount;
+                        if (DiffCount > 5)
+                        {
+                            pls.Break();
+                        }
+                    }
+                }).IsCompleted;
+            });
+        }
+
         private void SetMatchesIntoLV()
         {
             Parallel.For(0, Matches.Count, i => 
@@ -335,13 +442,30 @@ namespace ScaleTo16x16
                     listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
                     label4.Text = listView1.Items.Count.ToString();
                 });
-                
             });
             
             /*for (int i = 0; i < Matches.Count; i++)
             {
                 listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
             }*/
+        }
+
+        private void listView1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if(listView1.Items.Count > 0)
+            {
+                string LeftMatch = listView1.SelectedItems[0].SubItems[0].Text;
+                string RightMatch = listView1.SelectedItems[0].SubItems[1].Text;
+
+                if(pictureBox1.Image != null || pictureBox2.Image != null)
+                {
+                    pictureBox1.Image = null;
+                    pictureBox2.Image = null;
+                }
+                pictureBox1.Image = Image.FromFile(FolderPath + "\\" + LeftMatch);
+                pictureBox2.Image = Image.FromFile(FolderPath + "\\" + RightMatch);
+            }
+            
         }
 
 
