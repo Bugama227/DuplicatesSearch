@@ -29,20 +29,25 @@
         private void InitializeComponent()
         {
             this.Hash_label = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
+            this.MakeStuffButton = new System.Windows.Forms.Button();
+            this.LoadButton = new System.Windows.Forms.Button();
+            this.LightLabel = new System.Windows.Forms.Label();
             this.listView1 = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.label4 = new System.Windows.Forms.Label();
+            this.ResultLabel = new System.Windows.Forms.Label();
             this.FolderLabel = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
+            this.DarkLabel = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.DoubleLabel = new System.Windows.Forms.Label();
+            this.DeleteLeftButton = new System.Windows.Forms.Button();
+            this.DeleteRightButton = new System.Windows.Forms.Button();
+            this.DeleteBothButton = new System.Windows.Forms.Button();
+            this.FalsePositiveButton = new System.Windows.Forms.Button();
+            this.RetrieveButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.SuspendLayout();
@@ -56,34 +61,34 @@
             this.Hash_label.TabIndex = 5;
             this.Hash_label.Text = "FingerLabel";
             // 
-            // button1
+            // MakeStuffButton
             // 
-            this.button1.Location = new System.Drawing.Point(113, 550);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 12;
-            this.button1.Text = "Make Stuff";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.MakeStuffButton.Location = new System.Drawing.Point(108, 550);
+            this.MakeStuffButton.Name = "MakeStuffButton";
+            this.MakeStuffButton.Size = new System.Drawing.Size(75, 23);
+            this.MakeStuffButton.TabIndex = 12;
+            this.MakeStuffButton.Text = "Make Stuff";
+            this.MakeStuffButton.UseVisualStyleBackColor = true;
+            this.MakeStuffButton.Click += new System.EventHandler(this.MakeStuffButton_Click);
             // 
-            // button2
+            // LoadButton
             // 
-            this.button2.Location = new System.Drawing.Point(14, 550);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 13;
-            this.button2.Text = "Load Image";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.LoadButton.Location = new System.Drawing.Point(14, 550);
+            this.LoadButton.Name = "LoadButton";
+            this.LoadButton.Size = new System.Drawing.Size(75, 23);
+            this.LoadButton.TabIndex = 13;
+            this.LoadButton.Text = "Load Image";
+            this.LoadButton.UseVisualStyleBackColor = true;
+            this.LoadButton.Click += new System.EventHandler(this.LoadButton_Click);
             // 
-            // label3
+            // LightLabel
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(517, 601);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(98, 13);
-            this.label3.TabIndex = 16;
-            this.label3.Text = "LightCompareLabel";
+            this.LightLabel.AutoSize = true;
+            this.LightLabel.Location = new System.Drawing.Point(517, 601);
+            this.LightLabel.Name = "LightLabel";
+            this.LightLabel.Size = new System.Drawing.Size(98, 13);
+            this.LightLabel.TabIndex = 16;
+            this.LightLabel.Text = "LightCompareLabel";
             // 
             // listView1
             // 
@@ -92,9 +97,10 @@
             this.columnHeader2});
             this.listView1.FullRowSelect = true;
             this.listView1.HideSelection = false;
-            this.listView1.Location = new System.Drawing.Point(767, 28);
+            this.listView1.Location = new System.Drawing.Point(755, 28);
+            this.listView1.MultiSelect = false;
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(407, 498);
+            this.listView1.Size = new System.Drawing.Size(419, 498);
             this.listView1.TabIndex = 17;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -118,14 +124,14 @@
             this.progressBar1.TabIndex = 18;
             this.progressBar1.Visible = false;
             // 
-            // label4
+            // ResultLabel
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(725, 601);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(63, 13);
-            this.label4.TabIndex = 19;
-            this.label4.Text = "ResultLabel";
+            this.ResultLabel.AutoSize = true;
+            this.ResultLabel.Location = new System.Drawing.Point(725, 601);
+            this.ResultLabel.Name = "ResultLabel";
+            this.ResultLabel.Size = new System.Drawing.Size(63, 13);
+            this.ResultLabel.TabIndex = 19;
+            this.ResultLabel.Text = "ResultLabel";
             // 
             // FolderLabel
             // 
@@ -136,14 +142,14 @@
             this.FolderLabel.TabIndex = 20;
             this.FolderLabel.Text = "FolderLabel";
             // 
-            // label7
+            // DarkLabel
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(621, 601);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(98, 13);
-            this.label7.TabIndex = 21;
-            this.label7.Text = "DarkCompareLabel";
+            this.DarkLabel.AutoSize = true;
+            this.DarkLabel.Location = new System.Drawing.Point(621, 601);
+            this.DarkLabel.Name = "DarkLabel";
+            this.DarkLabel.Size = new System.Drawing.Size(98, 13);
+            this.DarkLabel.TabIndex = 21;
+            this.DarkLabel.Text = "DarkCompareLabel";
             // 
             // label8
             // 
@@ -172,32 +178,92 @@
             this.pictureBox2.TabIndex = 24;
             this.pictureBox2.TabStop = false;
             // 
-            // label1
+            // DoubleLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(794, 601);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(13, 13);
-            this.label1.TabIndex = 25;
-            this.label1.Text = "0";
+            this.DoubleLabel.AutoSize = true;
+            this.DoubleLabel.Location = new System.Drawing.Point(794, 601);
+            this.DoubleLabel.Name = "DoubleLabel";
+            this.DoubleLabel.Size = new System.Drawing.Size(13, 13);
+            this.DoubleLabel.TabIndex = 25;
+            this.DoubleLabel.Text = "0";
+            // 
+            // DeleteLeftButton
+            // 
+            this.DeleteLeftButton.Enabled = false;
+            this.DeleteLeftButton.Location = new System.Drawing.Point(852, 550);
+            this.DeleteLeftButton.Name = "DeleteLeftButton";
+            this.DeleteLeftButton.Size = new System.Drawing.Size(75, 23);
+            this.DeleteLeftButton.TabIndex = 26;
+            this.DeleteLeftButton.Text = "DeleteLeft";
+            this.DeleteLeftButton.UseVisualStyleBackColor = true;
+            this.DeleteLeftButton.Click += new System.EventHandler(this.DeleteLeftButton_Click);
+            // 
+            // DeleteRightButton
+            // 
+            this.DeleteRightButton.Enabled = false;
+            this.DeleteRightButton.Location = new System.Drawing.Point(933, 550);
+            this.DeleteRightButton.Name = "DeleteRightButton";
+            this.DeleteRightButton.Size = new System.Drawing.Size(75, 23);
+            this.DeleteRightButton.TabIndex = 27;
+            this.DeleteRightButton.Text = "DeleteRight";
+            this.DeleteRightButton.UseVisualStyleBackColor = true;
+            this.DeleteRightButton.Click += new System.EventHandler(this.DeleteRightButton_Click);
+            // 
+            // DeleteBothButton
+            // 
+            this.DeleteBothButton.Enabled = false;
+            this.DeleteBothButton.Location = new System.Drawing.Point(1014, 550);
+            this.DeleteBothButton.Name = "DeleteBothButton";
+            this.DeleteBothButton.Size = new System.Drawing.Size(75, 23);
+            this.DeleteBothButton.TabIndex = 28;
+            this.DeleteBothButton.Text = "DeleteBoth";
+            this.DeleteBothButton.UseVisualStyleBackColor = true;
+            this.DeleteBothButton.Click += new System.EventHandler(this.DeleteBothButton_Click);
+            // 
+            // FalsePositiveButton
+            // 
+            this.FalsePositiveButton.Enabled = false;
+            this.FalsePositiveButton.Location = new System.Drawing.Point(1095, 550);
+            this.FalsePositiveButton.Name = "FalsePositiveButton";
+            this.FalsePositiveButton.Size = new System.Drawing.Size(79, 23);
+            this.FalsePositiveButton.TabIndex = 29;
+            this.FalsePositiveButton.Text = "FalsePositive";
+            this.FalsePositiveButton.UseVisualStyleBackColor = true;
+            this.FalsePositiveButton.Click += new System.EventHandler(this.FalsePositiveButton_Click);
+            // 
+            // RetrieveButton
+            // 
+            this.RetrieveButton.Enabled = false;
+            this.RetrieveButton.Location = new System.Drawing.Point(755, 550);
+            this.RetrieveButton.Name = "RetrieveButton";
+            this.RetrieveButton.Size = new System.Drawing.Size(91, 23);
+            this.RetrieveButton.TabIndex = 30;
+            this.RetrieveButton.Text = "RetrieveButton";
+            this.RetrieveButton.UseVisualStyleBackColor = true;
+            this.RetrieveButton.Click += new System.EventHandler(this.RetrieveButton_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1186, 623);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.RetrieveButton);
+            this.Controls.Add(this.FalsePositiveButton);
+            this.Controls.Add(this.DeleteBothButton);
+            this.Controls.Add(this.DeleteRightButton);
+            this.Controls.Add(this.DeleteLeftButton);
+            this.Controls.Add(this.DoubleLabel);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label8);
-            this.Controls.Add(this.label7);
+            this.Controls.Add(this.DarkLabel);
             this.Controls.Add(this.FolderLabel);
-            this.Controls.Add(this.label4);
+            this.Controls.Add(this.ResultLabel);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.listView1);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.LightLabel);
+            this.Controls.Add(this.LoadButton);
+            this.Controls.Add(this.MakeStuffButton);
             this.Controls.Add(this.Hash_label);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -210,20 +276,25 @@
 
         #endregion
         private System.Windows.Forms.Label Hash_label;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button MakeStuffButton;
+        private System.Windows.Forms.Button LoadButton;
+        private System.Windows.Forms.Label LightLabel;
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ProgressBar progressBar1;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label ResultLabel;
         private System.Windows.Forms.Label FolderLabel;
-        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label DarkLabel;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.PictureBox pictureBox2;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label DoubleLabel;
+        private System.Windows.Forms.Button DeleteLeftButton;
+        private System.Windows.Forms.Button DeleteRightButton;
+        private System.Windows.Forms.Button DeleteBothButton;
+        private System.Windows.Forms.Button FalsePositiveButton;
+        private System.Windows.Forms.Button RetrieveButton;
     }
 }
 
