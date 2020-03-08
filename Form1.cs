@@ -30,8 +30,8 @@ namespace ScaleTo16x16
         public int DimensionScale = 32;
         public int ReducedDimensionScale = 16;
         public int TempAmount = 3;
-        public enum RemoveCases 
-        { 
+        public enum RemoveCases
+        {
             Left = 0,
             Right = 1,
             Both = 10,
@@ -82,7 +82,7 @@ namespace ScaleTo16x16
             {
                 ResultLabel.Text = await SetMatchesIntoLV();
             });
-                
+
         }
 
         async private Task<string> GetAllImagesPaths(string folderName)
@@ -103,9 +103,9 @@ namespace ScaleTo16x16
                  s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
                  s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase));
                 Paths = IEpaths.ToArray();
-                
-                
-                
+
+
+
                 stopWatch.Stop();
                 TimeSpan ts = stopWatch.Elapsed;
 
@@ -128,11 +128,11 @@ namespace ScaleTo16x16
 
                 Parallel.For(0, Paths.Length, i =>
                 {
-                    (LittleTempHash , MiddleTempHash, isDark) = SetBlackAndWhite(Paths[i]);
-                    
+                    (LittleTempHash, MiddleTempHash, isDark) = SetBlackAndWhite(Paths[i]);
+
                     if (isDark)
                     {
-                        DarkHashes.Add(Paths[i], new[] { LittleTempHash , MiddleTempHash});
+                        DarkHashes.Add(Paths[i], new[] { LittleTempHash, MiddleTempHash });
                     }
                     else
                     {
@@ -159,7 +159,7 @@ namespace ScaleTo16x16
             });
         }
 
-        private (string, string, bool) SetBlackAndWhite(string path) 
+        private (string, string, bool) SetBlackAndWhite(string path)
         {
             Bitmap Temp = new Bitmap(path);
             Bitmap MiddleSizedImage = new Bitmap(Temp, new Size(DimensionScale, DimensionScale));
@@ -170,11 +170,11 @@ namespace ScaleTo16x16
             bool isDark = false;
             int overallAvg = GetAvgImageColor(MiddleSizedImage);
 
-            if(overallAvg < 128)
+            if (overallAvg < 128)
             {
                 isDark = true;
             }
-            
+
             string MiddleTempHash = CreateHash(MiddleSizedImage, overallAvg);
             MiddleSizedImage.Dispose();
 
@@ -216,7 +216,7 @@ namespace ScaleTo16x16
         private int GetAvgImageColor(Bitmap image)
         {
             int avg = 0;
-            List<int> tempList = new List<int>(); 
+            List<int> tempList = new List<int>();
             Color pixel;
             for (int y = 0; y < image.Height; y++)
             {
@@ -326,7 +326,7 @@ namespace ScaleTo16x16
 
         async private Task<string> CompareDarkFingerPrints()
         {
-            return await Task.Run(async () => 
+            return await Task.Run(async () =>
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
@@ -413,20 +413,20 @@ namespace ScaleTo16x16
 
         private Task<string> SetMatchesIntoLV()
         {
-            return Task.Run(() => 
+            return Task.Run(() =>
             {
                 this.BeginInvoke((ThreadStart)delegate ()
                 {
                     listView1.BeginUpdate();
                 });
-                
+
                 Parallel.For(0, Matches.Count, i =>
                 {
                     this.BeginInvoke((ThreadStart)delegate ()
                     {
                         listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
                     });
-                    
+
                 });
                 this.BeginInvoke((ThreadStart)delegate ()
                 {
@@ -435,7 +435,7 @@ namespace ScaleTo16x16
                 UnblockButtons();
                 return listView1.Items.Count.ToString();
             });
-            
+
             /*for (int i = 0; i < Matches.Count; i++)
             {
                 listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
@@ -444,12 +444,12 @@ namespace ScaleTo16x16
 
         private void listView1_MouseClick(object sender, MouseEventArgs e)
         {
-            if(listView1.Items.Count > 0)
+            if (listView1.Items.Count > 0)
             {
                 string LeftMatch = listView1.SelectedItems[0].SubItems[0].Text;
                 string RightMatch = listView1.SelectedItems[0].SubItems[1].Text;
 
-                if(pictureBox1.Image != null || pictureBox2.Image != null)
+                if (pictureBox1.Image != null || pictureBox2.Image != null)
                 {
                     pictureBox1.Image = null;
                     pictureBox2.Image = null;
@@ -526,22 +526,22 @@ namespace ScaleTo16x16
                 File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Keys.First()}");
                 File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Values.First()}");
                 // TODO: REMOVE
-                foreach (KeyValuePair<string, string> item in TempOfRemoved)                     
+                foreach (KeyValuePair<string, string> item in TempOfRemoved)
                 {
                     Console.WriteLine(item);
                 }
                 TempOfRemoved.Remove(TempOfRemoved.Keys.First());
                 // TODO: REMOVE
-                foreach (KeyValuePair<string, string> item in TempOfRemoved)                        
+                foreach (KeyValuePair<string, string> item in TempOfRemoved)
                 {
                     Console.WriteLine(item);
                 }
             }
         }
-        
+
         private void RemoveMatchFromLV(RemoveCases meow)
         {
-            if(listView1.Items.Count == 0 || listView1.SelectedItems.Count == 0) return;
+            if (listView1.Items.Count == 0 || listView1.SelectedItems.Count == 0) return;
 
             CheckTemp();
 
@@ -571,7 +571,7 @@ namespace ScaleTo16x16
                         break;
                 }
             }
-            catch {}
+            catch { }
 
             TempOfRemoved.Add(leftMatch, rightMatch);
         }
