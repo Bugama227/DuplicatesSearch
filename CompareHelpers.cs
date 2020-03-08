@@ -8,11 +8,7 @@ using System.Threading.Tasks;
 
 namespace ScaleTo16x16
 {
-    class Constants
-    {
-        public const int DIMENSION_SCALE = 32;
-        public const int REDUCED_IMAGE_SCALE = 16;
-    }
+    
 
     class CompareHelpers
     {
@@ -90,27 +86,13 @@ namespace ScaleTo16x16
         private static string CreateHash(Bitmap image, int overallAvg)
         {
             string Hash = "";
-            Color pixel;
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    pixel = image.GetPixel(x, y);
-
-                    int r = pixel.R;
-                    int g = pixel.G;
-                    int b = pixel.B;
-                    int avg = (r + g + b) / 3;
-
-                    if (avg > overallAvg)
-                    {
-                        Hash += "1";
-                    }
-                    else
-                    {
-                        Hash += "0";
-                    }
-
+                    Hash += GetPixelAvg(image.GetPixel(x, y)) > overallAvg
+                        ? "1"
+                        : "0";
                 }
             }
             return Hash;
@@ -143,19 +125,14 @@ namespace ScaleTo16x16
             return tempImage;
         }
 
-        private static int GetPixelsAvg(Color pixel1, Color pixel2)
+        private static int GetPixelsAvg(Color p1, Color p2)
         {
-            int avg;
-            int r1 = pixel1.R;
-            int g1 = pixel1.G;
-            int b1 = pixel1.B;
+            return (GetPixelAvg(p1) + GetPixelAvg(p2)) / 2;
+        }
 
-            int r2 = pixel2.R;
-            int g2 = pixel2.G;
-            int b2 = pixel2.B;
-
-            avg = ((r1 + g1 + b1) / 3 + (r2 + g2 + b2) / 3) / 2;
-            return avg;
+        private static int GetPixelAvg(Color p)
+        {
+            return (p.R + p.G + p.B) / 3;
         }
 
         private static int GetAvgImageColor(Bitmap image)
@@ -169,15 +146,78 @@ namespace ScaleTo16x16
                 {
                     pixel = image.GetPixel(x, y);
 
-                    int r = pixel.R;
-                    int g = pixel.G;
-                    int b = pixel.B;
-
-                    tempList.Add((r + g + b) / 3);
+                    tempList.Add((pixel.R + pixel.G + pixel.B) / 3);
                 }
             }
 
             return tempList.Aggregate((i, acc) => i + acc) / tempList.Count;
+        }
+
+        /// <summary>
+        ///     Dirty func
+        /// </summary>
+        async public static Task<Dictionary<string, string>> CompareFingerPrints(
+            Dictionary<string, string[]> Hash,
+            Dictionary<string, string> Matches
+        )
+        {
+            return await Task.Run(async () =>
+            {
+                int J = 1;
+                for (int i = 0; i < Hash.Count - 1; i++)
+                {
+                    for (int j = J; j < Hash.Count; j++)
+                    {
+                        bool isSimilar = await FastCompareFunc(Hash.ElementAt(i).Value[0], Hash.ElementAt(j).Value[0])
+                            ? await SlowCompareFunc(Hash.ElementAt(i).Value[1], Hash.ElementAt(j).Value[1])
+                            : false;
+
+                        if (isSimilar)
+                        {
+                            try
+                            {
+                                Matches.Add(Path.GetFileName(Hash.ElementAt(i).Key), Path.GetFileName(Hash.ElementAt(j).Key));
+                            }
+                            catch { }
+                        }
+                    }
+                    J++;
+                }
+
+                return Matches;
+            });
+        }
+
+        private static Task<bool> FastCompareFunc(string firstHash, string secondHash)
+        {
+            return Task.Run(() =>
+            {
+                int DiffCount = 0;
+                return Parallel.For(0, Constants.REDUCED_IMAGE_SCALE * Constants.REDUCED_IMAGE_SCALE, (i, pls) =>
+                {
+                    if (firstHash[i] != secondHash[i])
+                    {
+                        ++DiffCount;
+                        if (DiffCount > 2) pls.Break();
+                    }
+                }).IsCompleted;
+            });
+        }
+
+        private static Task<bool> SlowCompareFunc(string firstHash, string secondHash)
+        {
+            return Task.Run(() =>
+            {
+                int DiffCount = 0;
+                return Parallel.For(0, Constants.DIMENSION_SCALE * Constants.DIMENSION_SCALE, (i, pls) =>
+                {
+                    if (firstHash[i] != secondHash[i])
+                    {
+                        ++DiffCount;
+                        if (DiffCount > 5) pls.Break();
+                    }
+                }).IsCompleted;
+            });
         }
     }
 }

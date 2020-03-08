@@ -14,164 +14,55 @@ using System.Windows.Forms;
 
 namespace ScaleTo16x16
 {
+    
+
+    enum RemoveCase
+    {
+        Left = 0,
+        Right = 1,
+        Both = 10,
+        FalsePositive = 11
+    };
+
     public partial class Form1 : Form
     {
         public Form1()
         {
             InitializeComponent();
         }
+
         public string[] Paths;
         public string FolderPath;
         public Dictionary<string, string[]> LightHashes = new Dictionary<string, string[]>();
         public Dictionary<string, string[]> DarkHashes = new Dictionary<string, string[]>();
         public Dictionary<string, string> Matches = new Dictionary<string, string>();
         public Dictionary<string, string> TempOfRemoved = new Dictionary<string, string>();
-        public int DimensionScale = 32;
-        public int ReducedDimensionScale = 16;
-        public int TempAmount = 3;
-        public bool isChecked = false;
-        public enum RemoveCases
-        {
-            Left = 0,
-            Right = 1,
-            Both = 10,
-            FalsePositive = 11
-        };
+        private bool isChecked = false;
+        
+
         private void ClearTemp()
         {
-            MakeStuffButton.Enabled = true;
-            ToggleButtons(false);
+            this.MakeStuffButton.Enabled = true;
+            this.ToggleButtons(false);
 
-            DeleteTempFolder();
-            FolderPath = "";
-            isChecked = false;
+            FoldingHelpers.DeleteTempFolder(FolderPath);
+            this.FolderPath = "";
+            this.isChecked = false;
 
-            pictureBox1.Image = null;
-            pictureBox2.Image = null;
-            listView1.Items.Clear();
+            this.pictureBox1.Image = null;
+            this.pictureBox2.Image = null;
+            this.listView1.Items.Clear();
 
-            LightHashes.Clear();
-            DarkHashes.Clear();
-            Matches.Clear();
+            this.LightHashes.Clear();
+            this.DarkHashes.Clear();
+            this.Matches.Clear();
 
-            FolderLabel.Text = "FolderLabel";
-            Hash_label.Text = "Hash_label";
-            LightLabel.Text = "LightLabel";
-            DarkLabel.Text = "DarkLabel";
-            ResultLabel.Text = "ResultLabel";
-            DoubleLabel.Text = "DoubleLabel";
-        }
-
-        async private Task<string> CompareLightFingerPrints()
-        {
-            return await Task.Run(async () =>
-            {
-                Stopwatch stopWatch = new Stopwatch();
-                stopWatch.Start();
-
-                int J = 1;
-                for (int i = 0; i < LightHashes.Count - 1; i++)
-                {
-                    for (int j = J; j < LightHashes.Count; j++)
-                    {
-                        bool isSimilar = await FastCompareFunc(LightHashes.ElementAt(i).Value[0], LightHashes.ElementAt(j).Value[0]).ConfigureAwait(false);
-                        if (isSimilar == true)
-                        {
-                            isSimilar = await SlowCompareFunc(LightHashes.ElementAt(i).Value[1], LightHashes.ElementAt(j).Value[1]).ConfigureAwait(false);
-                        }
-
-                        if (isSimilar == true)
-                        {
-                            try
-                            {
-                                Matches.Add(Path.GetFileName(LightHashes.ElementAt(i).Key), Path.GetFileName(LightHashes.ElementAt(j).Key));
-                            }
-                            catch { }
-                        }
-                    }
-                    J++;
-                }
-
-                TimeSpan ts = stopWatch.Elapsed;
-                string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                    ts.Hours, ts.Minutes, ts.Seconds,
-                    ts.Milliseconds / 10);
-                return elapsedTime;
-            }).ConfigureAwait(false);
-        }
-
-        async private Task<string> CompareDarkFingerPrints()
-        {
-            return await Task.Run(async () =>
-            {
-                Stopwatch stopWatch = new Stopwatch();
-                stopWatch.Start();
-                int J = 1;
-
-                for (int i = 0; i < DarkHashes.Count - 1; i++)
-                {
-                    for (int j = J; j < DarkHashes.Count; j++)
-                    {
-                        bool isSimilar = await FastCompareFunc(DarkHashes.ElementAt(i).Value[0], DarkHashes.ElementAt(j).Value[0]);
-                        if (isSimilar == true)
-                        {
-                            isSimilar = await SlowCompareFunc(DarkHashes.ElementAt(i).Value[1], DarkHashes.ElementAt(j).Value[1]);
-                        }
-                        if (isSimilar == true)
-                        {
-                            try
-                            {
-                                Matches.Add(Path.GetFileName(DarkHashes.ElementAt(i).Key), Path.GetFileName(DarkHashes.ElementAt(j).Key));
-                            }
-                            catch { }
-                        }
-                    }
-                    J++;
-                }
-                TimeSpan ts = stopWatch.Elapsed;
-                string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                    ts.Hours, ts.Minutes, ts.Seconds,
-                    ts.Milliseconds / 10);
-                return elapsedTime;
-            }).ConfigureAwait(false);
-        }
-
-        private Task<bool> FastCompareFunc(string firstHash, string secondHash)
-        {
-            return Task.Run(() =>
-            {
-                int DiffCount = 0;
-                return Parallel.For(0, ReducedDimensionScale * ReducedDimensionScale, (i, pls) =>
-                {
-                    if (firstHash[i] != secondHash[i])
-                    {
-                        ++DiffCount;
-                        if (DiffCount > 2)
-                        {
-                            pls.Break();
-                        }
-                    }
-                }).IsCompleted;
-            });
-        }
-
-        private Task<bool> SlowCompareFunc(string firstHash, string secondHash)
-        {
-            return Task.Run(() =>
-            {
-                int DiffCount = 0;
-                return Parallel.For(0, DimensionScale * DimensionScale, (i, pls) =>
-                {
-                    if (firstHash[i] != secondHash[i])
-                    {
-                        ++DiffCount;
-                        if (DiffCount > 5)
-                        {
-                            pls.Break();
-                        }
-                    }
-                }).IsCompleted;
-            });
+            this.FolderLabel.Text = "FolderLabel";
+            this.Hash_label.Text = "Hash_label";
+            this.LightLabel.Text = "LightLabel";
+            this.DarkLabel.Text = "DarkLabel";
+            this.ResultLabel.Text = "ResultLabel";
+            this.DoubleLabel.Text = "DoubleLabel";
         }
 
         private Task<string> SetMatchesIntoLV()
@@ -180,107 +71,61 @@ namespace ScaleTo16x16
             {
                 this.BeginInvoke((ThreadStart)delegate ()
                 {
-                    listView1.BeginUpdate();
+                    this.listView1.BeginUpdate();
                 });
 
                 Parallel.For(0, Matches.Count, i =>
                 {
                     this.BeginInvoke((ThreadStart)delegate ()
                     {
-                        listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
+                        this.listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
                     });
                 });
 
                 this.BeginInvoke((ThreadStart)delegate ()
                 {
-                    listView1.EndUpdate();
+                    this.listView1.EndUpdate();
                 });
-                    
+
                 ToggleButtons(true);
 
-                return listView1.Items.Count.ToString();
+                return this.listView1.Items.Count.ToString();
             });
         }
 
-        
-
-        private void CheckTemp()
+        private void RemoveMatchFromLV(RemoveCase removeCase)
         {
-            if (!Directory.Exists($"{FolderPath}\\TempFolder"))
-            {
-                DirectoryInfo di = Directory.CreateDirectory($"{FolderPath}\\TempFolder");
-                di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-            }
+            if (this.listView1.Items.Count == 0 || this.listView1.SelectedItems.Count == 0) return;
 
-            if (TempOfRemoved.Count > TempAmount - 1)
-            {
-                File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Keys.First()}");
-                File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Values.First()}");
-
-                TempOfRemoved.Remove(TempOfRemoved.Keys.First());
-            }
-        }
-
-        private void RemoveMatchFromLV(RemoveCases removeCase)
-        {
-            if (listView1.Items.Count == 0 || listView1.SelectedItems.Count == 0) return;
-
-            CheckTemp();
+            FoldingHelpers.CheckTemp(this.FolderPath, this.TempOfRemoved);
 
             string leftMatch = listView1.SelectedItems[0].SubItems[0].Text;
             string rightMatch = listView1.SelectedItems[0].SubItems[1].Text;
 
-            pictureBox1.Image = null;
-            pictureBox2.Image = null;
-            listView1.SelectedItems[0].Remove();
+            this.pictureBox1.Image = null;
+            this.pictureBox2.Image = null;
+            this.listView1.SelectedItems[0].Remove();
 
-            try
-            {
-                switch (removeCase)
-                {
-                    case RemoveCases.Left:
-                        File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
-                        break;
+            FoldingHelpers.RemoveSelectedFiles(removeCase, this.FolderPath, leftMatch, rightMatch);
 
-                    case RemoveCases.Right:
-                        File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
-                        break;
-
-                    case RemoveCases.Both:
-                        File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
-                        File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
-                        break;
-
-                    case RemoveCases.FalsePositive:
-                        break;
-                }
-            }
-            catch { }
-
-            TempOfRemoved.Add(leftMatch, rightMatch);
+            this.TempOfRemoved.Add(leftMatch, rightMatch);
         }
 
         private void ToggleButtons(bool state)
         {
             this.BeginInvoke((ThreadStart)delegate ()
             {
-                RetrieveButton.Enabled = state;
-                DeleteLeftButton.Enabled = state;
-                DeleteRightButton.Enabled = state;
-                DeleteBothButton.Enabled = state;
-                FalsePositiveButton.Enabled = state;
+                this.RetrieveButton.Enabled = state;
+                this.DeleteLeftButton.Enabled = state;
+                this.DeleteRightButton.Enabled = state;
+                this.DeleteBothButton.Enabled = state;
+                this.FalsePositiveButton.Enabled = state;
             });
-        }
-
-        private void DeleteTempFolder()
-        {
-            if (FolderPath != null && Directory.Exists($"{FolderPath}\\TempFolder"))
-                Directory.Delete($"{FolderPath}\\TempFolder");
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            DeleteTempFolder();
+            FoldingHelpers.DeleteTempFolder(this.FolderPath);
         }
 
         async private void LoadButton_Click(object sender, EventArgs e)
@@ -290,7 +135,7 @@ namespace ScaleTo16x16
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 ClearTemp();
-                FolderPath = fbd.SelectedPath;
+                this.FolderPath = fbd.SelectedPath;
                 this.Paths = await CompareHelpers.GetAllImagesPaths(fbd.SelectedPath);
             }
             fbd.Dispose();
@@ -298,81 +143,79 @@ namespace ScaleTo16x16
 
         async private void MakeStuffButton_Click(object sender, EventArgs e)
         {
-            if (isChecked) return;
+            if (this.isChecked) return;
 
-            MakeStuffButton.Enabled = false;
-            isChecked = true;
+            this.MakeStuffButton.Enabled = false;
+            this.isChecked = true;
 
-            (DarkHashes, LightHashes) = await CompareHelpers.SetFingerPrintsIntoDictionary(Paths);
+            (this.DarkHashes, this.LightHashes) = await CompareHelpers.SetFingerPrintsIntoDictionary(Paths);
             this.Paths = null;
 
-            LightLabel.Text = await CompareLightFingerPrints();
-            DarkLabel.Text = await CompareDarkFingerPrints();
+            await CompareHelpers.CompareFingerPrints(this.LightHashes, this.Matches);
+            await CompareHelpers.CompareFingerPrints(this.DarkHashes, this.Matches);
 
             this.BeginInvoke((ThreadStart)async delegate ()
             {
-                ResultLabel.Text = await SetMatchesIntoLV();
+                this.ResultLabel.Text = await this.SetMatchesIntoLV();
             });
         }
 
         private void listView1_MouseClick(object sender, MouseEventArgs e)
         {
-            if (listView1.Items.Count == 0) return;
+            if (this.listView1.Items.Count == 0) return;
 
-            string LeftMatch = listView1.SelectedItems[0].SubItems[0].Text;
-            string RightMatch = listView1.SelectedItems[0].SubItems[1].Text;
+            string LeftMatch = this.listView1.SelectedItems[0].SubItems[0].Text;
+            string RightMatch = this.listView1.SelectedItems[0].SubItems[1].Text;
 
-            pictureBox1.Image = null;
-            pictureBox2.Image = null;
+            this.pictureBox1.Image = null;
+            this.pictureBox2.Image = null;
 
-            pictureBox1.ImageLocation = $"{FolderPath}\\{LeftMatch}";
-            pictureBox2.ImageLocation = $"{FolderPath}\\{RightMatch}";
+            this.pictureBox1.ImageLocation = $"{this.FolderPath}\\{LeftMatch}";
+            this.pictureBox2.ImageLocation = $"{this.FolderPath}\\{RightMatch}";
         }
 
         private void DeleteLeftButton_Click(object sender, EventArgs e)
         {
-            RemoveMatchFromLV(RemoveCases.Left);
+            this.RemoveMatchFromLV(RemoveCase.Left);
         }
 
         private void DeleteRightButton_Click(object sender, EventArgs e)
         {
-            RemoveMatchFromLV(RemoveCases.Right);
+            this.RemoveMatchFromLV(RemoveCase.Right);
         }
 
         private void DeleteBothButton_Click(object sender, EventArgs e)
         {
-            RemoveMatchFromLV(RemoveCases.Both);
+            this.RemoveMatchFromLV(RemoveCase.Both);
         }
 
         private void FalsePositiveButton_Click(object sender, EventArgs e)
         {
-            RemoveMatchFromLV(RemoveCases.FalsePositive);
+            this.RemoveMatchFromLV(RemoveCase.FalsePositive);
         }
 
         private void RetrieveButton_Click(object sender, EventArgs e)
         {
-            if (TempOfRemoved.Count > 0)
+            if (this.TempOfRemoved.Count > 0)
             {
-                string LeftMatch = TempOfRemoved.Keys.Last();
-                string RightMatch = TempOfRemoved.Values.Last();
+                string leftMatch = this.TempOfRemoved.Keys.Last();
+                string rightMatch = this.TempOfRemoved.Values.Last();
 
-                listView1.Items.Add(new ListViewItem(new[] { LeftMatch, RightMatch }));
-                if (File.Exists($"{FolderPath}\\TempFolder\\{LeftMatch}"))
-                {
-                    File.Move(
-                        $"{FolderPath}\\TempFolder\\{LeftMatch}",
-                        $"{FolderPath}\\{LeftMatch}"
-                    );
-                }
-                if (File.Exists($"{FolderPath}\\TempFolder\\{RightMatch}"))
-                {
-                    File.Move(
-                        $"{FolderPath}\\TempFolder\\{RightMatch}",
-                        $"{FolderPath}\\{RightMatch}"
-                    );
-                }
-                TempOfRemoved.Remove(TempOfRemoved.Keys.Last());
+                this.listView1.Items.Add(new ListViewItem(new[] { leftMatch, rightMatch }));
+
+                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{leftMatch}", $"{this.FolderPath}\\{leftMatch}");
+                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{rightMatch}", $"{this.FolderPath}\\{rightMatch}");
+
+                this.TempOfRemoved.Remove(this.TempOfRemoved.Keys.Last());
             }
         }
+    }
+
+    class Constants
+    {
+        public const int DIMENSION_SCALE = 32;
+        public const int REDUCED_IMAGE_SCALE = 16;
+        public const int TEMP_AMOUNT = 3;
+
     }
 }
