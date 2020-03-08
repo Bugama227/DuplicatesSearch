@@ -14,16 +14,6 @@ using System.Windows.Forms;
 
 namespace ScaleTo16x16
 {
-    
-
-    enum RemoveCase
-    {
-        Left = 0,
-        Right = 1,
-        Both = 10,
-        FalsePositive = 11
-    };
-
     public partial class Form1 : Form
     {
         public Form1()
@@ -31,22 +21,18 @@ namespace ScaleTo16x16
             InitializeComponent();
         }
 
-        public string[] Paths;
-        public string FolderPath;
+        private FoldingManager FolderManager;
         public Dictionary<string, string[]> LightHashes = new Dictionary<string, string[]>();
         public Dictionary<string, string[]> DarkHashes = new Dictionary<string, string[]>();
         public Dictionary<string, string> Matches = new Dictionary<string, string>();
-        public Dictionary<string, string> TempOfRemoved = new Dictionary<string, string>();
         private bool isChecked = false;
-        
 
         private void ClearTemp()
         {
             this.MakeStuffButton.Enabled = true;
             this.ToggleButtons(false);
 
-            FoldingHelpers.DeleteTempFolder(FolderPath);
-            this.FolderPath = "";
+            this.FolderManager.DeleteTempFolder();
             this.isChecked = false;
 
             this.pictureBox1.Image = null;
@@ -63,6 +49,8 @@ namespace ScaleTo16x16
             this.DarkLabel.Text = "DarkLabel";
             this.ResultLabel.Text = "ResultLabel";
             this.DoubleLabel.Text = "DoubleLabel";
+
+            this.FolderManager = null;
         }
 
         private Task<string> SetMatchesIntoLV()
@@ -97,7 +85,7 @@ namespace ScaleTo16x16
         {
             if (this.listView1.Items.Count == 0 || this.listView1.SelectedItems.Count == 0) return;
 
-            FoldingHelpers.CheckTemp(this.FolderPath, this.TempOfRemoved);
+            this.FolderManager.CheckTemp();
 
             string leftMatch = listView1.SelectedItems[0].SubItems[0].Text;
             string rightMatch = listView1.SelectedItems[0].SubItems[1].Text;
@@ -106,9 +94,7 @@ namespace ScaleTo16x16
             this.pictureBox2.Image = null;
             this.listView1.SelectedItems[0].Remove();
 
-            FoldingHelpers.RemoveSelectedFiles(removeCase, this.FolderPath, leftMatch, rightMatch);
-
-            this.TempOfRemoved.Add(leftMatch, rightMatch);
+            this.FolderManager.RemoveSelectedFiles(removeCase);
         }
 
         private void ToggleButtons(bool state)
@@ -125,7 +111,7 @@ namespace ScaleTo16x16
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            FoldingHelpers.DeleteTempFolder(this.FolderPath);
+            this.FolderManager.DeleteTempFolder();
         }
 
         async private void LoadButton_Click(object sender, EventArgs e)
@@ -135,9 +121,9 @@ namespace ScaleTo16x16
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 ClearTemp();
-                this.FolderPath = fbd.SelectedPath;
-                this.Paths = await CompareHelpers.GetAllImagesPaths(fbd.SelectedPath);
+                this.FolderManager = new FoldingManager(fbd.SelectedPath);
             }
+
             fbd.Dispose();
         }
 
@@ -148,8 +134,7 @@ namespace ScaleTo16x16
             this.MakeStuffButton.Enabled = false;
             this.isChecked = true;
 
-            (this.DarkHashes, this.LightHashes) = await CompareHelpers.SetFingerPrintsIntoDictionary(Paths);
-            this.Paths = null;
+            (this.DarkHashes, this.LightHashes) = await CompareHelpers.SetFingerPrintsIntoDictionary(this.FolderManager.GetPaths());
 
             await CompareHelpers.CompareFingerPrints(this.LightHashes, this.Matches);
             await CompareHelpers.CompareFingerPrints(this.DarkHashes, this.Matches);
@@ -164,14 +149,16 @@ namespace ScaleTo16x16
         {
             if (this.listView1.Items.Count == 0) return;
 
-            string LeftMatch = this.listView1.SelectedItems[0].SubItems[0].Text;
-            string RightMatch = this.listView1.SelectedItems[0].SubItems[1].Text;
+            string leftMatch = this.listView1.SelectedItems[0].SubItems[0].Text;
+            string rightMatch = this.listView1.SelectedItems[0].SubItems[1].Text;
 
             this.pictureBox1.Image = null;
             this.pictureBox2.Image = null;
 
-            this.pictureBox1.ImageLocation = $"{this.FolderPath}\\{LeftMatch}";
-            this.pictureBox2.ImageLocation = $"{this.FolderPath}\\{RightMatch}";
+            var folderPath = this.FolderManager.GetFolderPath();
+
+            this.pictureBox1.ImageLocation = $"{folderPath}\\{leftMatch}";
+            this.pictureBox2.ImageLocation = $"{folderPath}\\{rightMatch}";
         }
 
         private void DeleteLeftButton_Click(object sender, EventArgs e)
@@ -196,26 +183,10 @@ namespace ScaleTo16x16
 
         private void RetrieveButton_Click(object sender, EventArgs e)
         {
-            if (this.TempOfRemoved.Count > 0)
-            {
-                string leftMatch = this.TempOfRemoved.Keys.Last();
-                string rightMatch = this.TempOfRemoved.Values.Last();
+            var matches = this.FolderManager.Retrieve();
+            if (matches == null) return;
 
-                this.listView1.Items.Add(new ListViewItem(new[] { leftMatch, rightMatch }));
-
-                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{leftMatch}", $"{this.FolderPath}\\{leftMatch}");
-                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{rightMatch}", $"{this.FolderPath}\\{rightMatch}");
-
-                this.TempOfRemoved.Remove(this.TempOfRemoved.Keys.Last());
-            }
+            this.listView1.Items.Add(new ListViewItem(new[] { matches[0], matches[1] }));
         }
-    }
-
-    class Constants
-    {
-        public const int DIMENSION_SCALE = 32;
-        public const int REDUCED_IMAGE_SCALE = 16;
-        public const int TEMP_AMOUNT = 3;
-
     }
 }
