@@ -24,12 +24,12 @@ namespace ScaleTo16x16
         public string FolderPath;
         public Dictionary<string, string[]> LightHashes = new Dictionary<string, string[]>();
         public Dictionary<string, string[]> DarkHashes = new Dictionary<string, string[]>();
-        /*public List<KeyValuePair<string, string>> Matches = new List<KeyValuePair<string, string>>();*/
         public Dictionary<string, string> Matches = new Dictionary<string, string>();
         public Dictionary<string, string> TempOfRemoved = new Dictionary<string, string>();
         public int DimensionScale = 32;
         public int ReducedDimensionScale = 16;
         public int TempAmount = 3;
+        public bool isChecked = false;
         public enum RemoveCases
         {
             Left = 0,
@@ -39,14 +39,19 @@ namespace ScaleTo16x16
         };
         private void ClearTemp()
         {
+            MakeStuffButton.Enabled = true;
+            ToggleButtons(false);
+
             DeleteTempFolder();
+            FolderPath = "";
+            isChecked = false;
+
             pictureBox1.Image = null;
             pictureBox2.Image = null;
-            FolderPath = "";
+            listView1.Items.Clear();
+
             LightHashes.Clear();
             DarkHashes.Clear();
-            progressBar1.Value = 0;
-            listView1.Items.Clear();
             Matches.Clear();
 
             FolderLabel.Text = "FolderLabel";
@@ -60,20 +65,23 @@ namespace ScaleTo16x16
         async private void LoadButton_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
+
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 ClearTemp();
                 FolderPath = fbd.SelectedPath;
                 FolderLabel.Text = await GetAllImagesPaths(fbd.SelectedPath);
-                progressBar1.Minimum = 0;
-                progressBar1.Maximum = Paths.Length;
             }
             fbd.Dispose();
         }
 
         async private void MakeStuffButton_Click(object sender, EventArgs e)
         {
-            progressBar1.Visible = true;
+            if (isChecked) return;
+
+            MakeStuffButton.Enabled = false;
+            isChecked = true;
+
             Hash_label.Text = await SetFingerPrintsIntoDictionary();
             LightLabel.Text = await CompareLightFingerPrints();
             DarkLabel.Text = await CompareDarkFingerPrints();
@@ -82,7 +90,6 @@ namespace ScaleTo16x16
             {
                 ResultLabel.Text = await SetMatchesIntoLV();
             });
-
         }
 
         async private Task<string> GetAllImagesPaths(string folderName)
@@ -92,27 +99,28 @@ namespace ScaleTo16x16
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
 
-                /*this.BeginInvoke((ThreadStart)delegate ()
-                {
-                    label8.Text = "Getting Images Paths";
-                });*/
-                var IEpaths = Directory.GetFiles(folderName, "*.*").AsParallel(). // search of typical image formats using lynq
-                 Where(s => s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                 s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                 s.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                 s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
-                 s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase));
-                Paths = IEpaths.ToArray();
-
-
+                Paths = Directory
+                    .GetFiles(folderName, "*.*")
+                    .AsParallel()
+                    .Where(s =>
+                        s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                        s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                        s.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                        s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
+                        s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
+                    )
+                    .ToArray();
 
                 stopWatch.Stop();
                 TimeSpan ts = stopWatch.Elapsed;
 
-                string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-                return elapsedTime.ToString();
+                return String.Format(
+                    "{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours,
+                    ts.Minutes,
+                    ts.Seconds,
+                    ts.Milliseconds / 10
+                ).ToString();
             }).ConfigureAwait(false);
         }
 
@@ -122,10 +130,10 @@ namespace ScaleTo16x16
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
+
                 bool isDark;
                 string LittleTempHash = "";
                 string MiddleTempHash = "";
-
                 Parallel.For(0, Paths.Length, i =>
                 {
                     (LittleTempHash, MiddleTempHash, isDark) = SetBlackAndWhite(Paths[i]);
@@ -152,10 +160,13 @@ namespace ScaleTo16x16
 
                 TimeSpan ts = stopWatch.Elapsed;
 
-                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds / 10);
-                return elapsedTime.ToString();
+                return String.Format(
+                    "{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours,
+                    ts.Minutes,
+                    ts.Seconds,
+                    ts.Milliseconds / 10
+                ).ToString();
             });
         }
 
@@ -215,8 +226,8 @@ namespace ScaleTo16x16
 
         private int GetAvgImageColor(Bitmap image)
         {
-            int avg = 0;
             List<int> tempList = new List<int>();
+
             Color pixel;
             for (int y = 0; y < image.Height; y++)
             {
@@ -231,8 +242,8 @@ namespace ScaleTo16x16
                     tempList.Add((r + g + b) / 3);
                 }
             }
-            avg = tempList.Aggregate((i, acc) => i + acc) / tempList.Count;
-            return avg;
+
+            return tempList.Aggregate((i, acc) => i + acc) / tempList.Count;
         }
 
         private Bitmap ReduceImageScale(Bitmap MiddleSizedImage)
@@ -282,40 +293,30 @@ namespace ScaleTo16x16
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
+
                 int J = 1;
-
-                /*this.BeginInvoke((ThreadStart)delegate ()
-                {
-                    label8.Text = "Comparing Light Fingers";
-                });*/
-
                 for (int i = 0; i < LightHashes.Count - 1; i++)
                 {
                     for (int j = J; j < LightHashes.Count; j++)
                     {
-
-
                         bool isSimilar = await FastCompareFunc(LightHashes.ElementAt(i).Value[0], LightHashes.ElementAt(j).Value[0]).ConfigureAwait(false);
                         if (isSimilar == true)
                         {
                             isSimilar = await SlowCompareFunc(LightHashes.ElementAt(i).Value[1], LightHashes.ElementAt(j).Value[1]).ConfigureAwait(false);
                         }
-                        //UpdateProgressBar();
+
                         if (isSimilar == true)
                         {
-                            /*Matches.Add(new KeyValuePair<string, string>(Path.GetFileName(Hashes.ElementAt(i).Key), Path.GetFileName(Hashes.ElementAt(j).Key)));*/
                             try
                             {
                                 Matches.Add(Path.GetFileName(LightHashes.ElementAt(i).Key), Path.GetFileName(LightHashes.ElementAt(j).Key));
                             }
-                            catch
-                            {
-
-                            }
+                            catch { }
                         }
                     }
                     J++;
                 }
+
                 TimeSpan ts = stopWatch.Elapsed;
                 string elapsedTime = string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                     ts.Hours, ts.Minutes, ts.Seconds,
@@ -332,18 +333,10 @@ namespace ScaleTo16x16
                 stopWatch.Start();
                 int J = 1;
 
-                /*this.BeginInvoke((ThreadStart)delegate ()
-                {
-                    label8.Text = "Comparing Dark Fingers";
-                });*/
-
                 for (int i = 0; i < DarkHashes.Count - 1; i++)
                 {
                     for (int j = J; j < DarkHashes.Count; j++)
                     {
-
-
-
                         bool isSimilar = await FastCompareFunc(DarkHashes.ElementAt(i).Value[0], DarkHashes.ElementAt(j).Value[0]);
                         if (isSimilar == true)
                         {
@@ -351,17 +344,12 @@ namespace ScaleTo16x16
                         }
                         if (isSimilar == true)
                         {
-                            /*Matches.Add(new KeyValuePair<string, string>(Path.GetFileName(Hashes.ElementAt(i).Key), Path.GetFileName(Hashes.ElementAt(j).Key)));*/
                             try
                             {
                                 Matches.Add(Path.GetFileName(DarkHashes.ElementAt(i).Key), Path.GetFileName(DarkHashes.ElementAt(j).Key));
                             }
-                            catch
-                            {
-
-                            }
+                            catch { }
                         }
-                        //UpdateProgressBar();
                     }
                     J++;
                 }
@@ -426,43 +414,31 @@ namespace ScaleTo16x16
                     {
                         listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
                     });
-
                 });
+
                 this.BeginInvoke((ThreadStart)delegate ()
                 {
                     listView1.EndUpdate();
                 });
-                UnblockButtons();
+                    
+                ToggleButtons(true);
+
                 return listView1.Items.Count.ToString();
             });
-
-            /*for (int i = 0; i < Matches.Count; i++)
-            {
-                listView1.Items.Add(new ListViewItem(new[] { Matches.ElementAt(i).Key, Matches.ElementAt(i).Value }));
-            }*/
         }
 
         private void listView1_MouseClick(object sender, MouseEventArgs e)
         {
-            if (listView1.Items.Count > 0)
-            {
-                string LeftMatch = listView1.SelectedItems[0].SubItems[0].Text;
-                string RightMatch = listView1.SelectedItems[0].SubItems[1].Text;
+            if (listView1.Items.Count == 0) return;
+            
+            string LeftMatch = listView1.SelectedItems[0].SubItems[0].Text;
+            string RightMatch = listView1.SelectedItems[0].SubItems[1].Text;
 
-                if (pictureBox1.Image != null || pictureBox2.Image != null)
-                {
-                    pictureBox1.Image = null;
-                    pictureBox2.Image = null;
-                }
-                /*Bitmap image1 = new Bitmap(FolderPath + "\\" + LeftMatch);
-                Bitmap image2 = new Bitmap(FolderPath + "\\" + RightMatch);
-                pictureBox1.Image = image1;
-                pictureBox2.Image = image2;*/
-                pictureBox1.ImageLocation = FolderPath + "\\" + LeftMatch;
-                pictureBox2.ImageLocation = FolderPath + "\\" + RightMatch;
-                /*image1.Dispose();
-                image2.Dispose();*/
-            }
+            pictureBox1.Image = null;
+            pictureBox2.Image = null;
+            
+            pictureBox1.ImageLocation = $"{FolderPath}\\{LeftMatch}";
+            pictureBox2.ImageLocation = $"{FolderPath}\\{RightMatch}";
         }
 
         private void DeleteLeftButton_Click(object sender, EventArgs e)
@@ -495,51 +471,40 @@ namespace ScaleTo16x16
                 listView1.Items.Add(new ListViewItem(new[] { LeftMatch, RightMatch }));
                 if (File.Exists($"{FolderPath}\\TempFolder\\{LeftMatch}"))
                 {
-                    File.Move($"{FolderPath}\\TempFolder\\{LeftMatch}",
-                              $"{FolderPath}\\{LeftMatch}");
+                    File.Move(
+                        $"{FolderPath}\\TempFolder\\{LeftMatch}",
+                        $"{FolderPath}\\{LeftMatch}"
+                    );
                 }
                 if (File.Exists($"{FolderPath}\\TempFolder\\{RightMatch}"))
                 {
-                    File.Move($"{FolderPath}\\TempFolder\\{RightMatch}",
-                              $"{FolderPath}\\{RightMatch}");
+                    File.Move(
+                        $"{FolderPath}\\TempFolder\\{RightMatch}",
+                        $"{FolderPath}\\{RightMatch}"
+                    );
                 }
                 TempOfRemoved.Remove(TempOfRemoved.Keys.Last());
             }
-
         }
 
         private void CheckTemp()
         {
-            if (!Directory.Exists(FolderPath + "\\" + "TempFolder"))
+            if (!Directory.Exists($"{FolderPath}\\TempFolder"))
             {
-                DirectoryInfo di = Directory.CreateDirectory(FolderPath + "\\" + "TempFolder");
+                DirectoryInfo di = Directory.CreateDirectory($"{FolderPath}\\TempFolder");
                 di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-            }
-            // TODO: REMOVE
-            foreach (KeyValuePair<string, string> item in TempOfRemoved)
-            {
-                Console.WriteLine(item);
             }
 
             if (TempOfRemoved.Count > TempAmount - 1)
             {
                 File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Keys.First()}");
                 File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Values.First()}");
-                // TODO: REMOVE
-                foreach (KeyValuePair<string, string> item in TempOfRemoved)
-                {
-                    Console.WriteLine(item);
-                }
+
                 TempOfRemoved.Remove(TempOfRemoved.Keys.First());
-                // TODO: REMOVE
-                foreach (KeyValuePair<string, string> item in TempOfRemoved)
-                {
-                    Console.WriteLine(item);
-                }
             }
         }
 
-        private void RemoveMatchFromLV(RemoveCases meow)
+        private void RemoveMatchFromLV(RemoveCases removeCase)
         {
             if (listView1.Items.Count == 0 || listView1.SelectedItems.Count == 0) return;
 
@@ -547,12 +512,14 @@ namespace ScaleTo16x16
 
             string leftMatch = listView1.SelectedItems[0].SubItems[0].Text;
             string rightMatch = listView1.SelectedItems[0].SubItems[1].Text;
+
             pictureBox1.Image = null;
             pictureBox2.Image = null;
             listView1.SelectedItems[0].Remove();
+
             try
             {
-                switch (meow)
+                switch (removeCase)
                 {
                     case RemoveCases.Left:
                         File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
@@ -576,15 +543,15 @@ namespace ScaleTo16x16
             TempOfRemoved.Add(leftMatch, rightMatch);
         }
 
-        private void UnblockButtons()
+        private void ToggleButtons(bool state)
         {
             this.BeginInvoke((ThreadStart)delegate ()
             {
-                RetrieveButton.Enabled = true;
-                DeleteLeftButton.Enabled = true;
-                DeleteRightButton.Enabled = true;
-                DeleteBothButton.Enabled = true;
-                FalsePositiveButton.Enabled = true;
+                RetrieveButton.Enabled = state;
+                DeleteLeftButton.Enabled = state;
+                DeleteRightButton.Enabled = state;
+                DeleteBothButton.Enabled = state;
+                FalsePositiveButton.Enabled = state;
             });
         }
 
