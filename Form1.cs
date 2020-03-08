@@ -39,6 +39,7 @@ namespace ScaleTo16x16
         };
         private void ClearTemp()
         {
+            DeleteTempFolder();
             pictureBox1.Image = null;
             pictureBox2.Image = null;
             FolderPath = "";
@@ -124,10 +125,7 @@ namespace ScaleTo16x16
                 bool isDark;
                 string LittleTempHash = "";
                 string MiddleTempHash = "";
-                /*this.BeginInvoke((ThreadStart)delegate ()
-                {
-                    label8.Text = "Setting Image Hash Into Dictionary";
-                });*/
+
                 Parallel.For(0, Paths.Length, i =>
                 {
                     (LittleTempHash , MiddleTempHash, isDark) = SetBlackAndWhite(Paths[i]);
@@ -140,7 +138,6 @@ namespace ScaleTo16x16
                     {
                         LightHashes.Add(Paths[i], new[] { LittleTempHash, MiddleTempHash });
                     }
-                    //UpdateProgressBar();
                 });
 
                 stopWatch.Stop();
@@ -162,75 +159,41 @@ namespace ScaleTo16x16
             });
         }
 
-        private void UpdateProgressBar()
-        {
-            this.BeginInvoke((ThreadStart)delegate ()
-            {
-                progressBar1.Value += 1;
-            });
-        }
-
         private (string, string, bool) SetBlackAndWhite(string path) 
         {
             Bitmap Temp = new Bitmap(path);
             Bitmap MiddleSizedImage = new Bitmap(Temp, new Size(DimensionScale, DimensionScale));
+            Bitmap SmallerImage = ReduceImageScale(MiddleSizedImage);
+
+            Temp.Dispose();
+
             bool isDark = false;
             int overallAvg = GetAvgImageColor(MiddleSizedImage);
+
             if(overallAvg < 128)
             {
                 isDark = true;
             }
-            Bitmap SmallerImage = ReduceImageScale(MiddleSizedImage);
-            Temp.Dispose();
-            Color pixel;
             
-            string MiddleTempHash = "";
-            string LittleTempHash = "";
-
-            /*this.BeginInvoke((ThreadStart)delegate ()
-            {
-                label8.Text = "Setting Image Hash";
-            });*/
-
-            for (int y = 0; y < MiddleSizedImage.Height; y++)
-            {
-                for (int x = 0; x < MiddleSizedImage.Width; x++)
-                {
-                    
-                    
-                    pixel = MiddleSizedImage.GetPixel(x, y);
-
-                    int r = pixel.R;
-                    int g = pixel.G;
-                    int b = pixel.B;
-                    int avg = (r + g + b) / 3;
-
-                    if (avg > overallAvg)
-                    {
-                        MiddleTempHash += "1";
-                    }
-                    else
-                    {
-                        MiddleTempHash += "0";
-                    }
-
-                }
-            }
+            string MiddleTempHash = CreateHash(MiddleSizedImage, overallAvg);
             MiddleSizedImage.Dispose();
 
-            /*this.BeginInvoke((ThreadStart)delegate ()
-            {
-                label8.Text = "Setting Image Hash";
-            });*/
+            string LittleTempHash = CreateHash(SmallerImage, overallAvg);
+            SmallerImage.Dispose();
 
-            for (int y = 0; y < SmallerImage.Height; y++)
+            return (LittleTempHash, MiddleTempHash, isDark);
+        }
+
+        private string CreateHash(Bitmap image, int overallAvg)
+        {
+            string Hash = "";
+            Color pixel;
+            for (int y = 0; y < image.Height; y++)
             {
-                for(int x = 0; x < SmallerImage.Width; x++)
+                for (int x = 0; x < image.Width; x++)
                 {
-                    
-                    
-                    pixel = SmallerImage.GetPixel(x, y);
-                    
+                    pixel = image.GetPixel(x, y);
+
                     int r = pixel.R;
                     int g = pixel.G;
                     int b = pixel.B;
@@ -238,17 +201,16 @@ namespace ScaleTo16x16
 
                     if (avg > overallAvg)
                     {
-                        LittleTempHash += "1";
+                        Hash += "1";
                     }
                     else
                     {
-                        LittleTempHash += "0";
+                        Hash += "0";
                     }
-                    
+
                 }
             }
-            SmallerImage.Dispose();
-            return (LittleTempHash, MiddleTempHash, isDark);
+            return Hash;
         }
 
         private int GetAvgImageColor(Bitmap image)
@@ -276,14 +238,10 @@ namespace ScaleTo16x16
         private Bitmap ReduceImageScale(Bitmap MiddleSizedImage)
         {
             Bitmap newImage = new Bitmap(MiddleSizedImage);
-            /*this.BeginInvoke((ThreadStart)delegate ()
-            {
-                label8.Text = "Reducing Image Size";
-            });*/
+
             while (newImage.Width > ReducedDimensionScale)
-            {
                 newImage = SuperReduced(newImage);
-            }
+
             return newImage;
         }
 
@@ -557,10 +515,24 @@ namespace ScaleTo16x16
                 DirectoryInfo di = Directory.CreateDirectory(FolderPath + "\\" + "TempFolder");
                 di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
             }
-            if (TempOfRemoved.Count > TempAmount)
+            // TODO: REMOVE
+            foreach (KeyValuePair<string, string> item in TempOfRemoved)
             {
+                Console.WriteLine(item);
+            }
+
+            if (TempOfRemoved.Count > TempAmount - 1)
+            {
+                File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Keys.First()}");
+                File.Delete($"{FolderPath}\\TempFolder\\{TempOfRemoved.Values.First()}");
+                // TODO: REMOVE
+                foreach (KeyValuePair<string, string> item in TempOfRemoved)                     
+                {
+                    Console.WriteLine(item);
+                }
                 TempOfRemoved.Remove(TempOfRemoved.Keys.First());
-                foreach(KeyValuePair<string, string> item in TempOfRemoved)
+                // TODO: REMOVE
+                foreach (KeyValuePair<string, string> item in TempOfRemoved)                        
                 {
                     Console.WriteLine(item);
                 }
@@ -578,25 +550,29 @@ namespace ScaleTo16x16
             pictureBox1.Image = null;
             pictureBox2.Image = null;
             listView1.SelectedItems[0].Remove();
-            
-            switch (meow)
+            try
             {
-                case RemoveCases.Left:
-                    File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
-                    break;
+                switch (meow)
+                {
+                    case RemoveCases.Left:
+                        File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
+                        break;
 
-                case RemoveCases.Right:
-                    File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
-                    break;
+                    case RemoveCases.Right:
+                        File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
+                        break;
 
-                case RemoveCases.Both:
-                    File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
-                    File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
-                    break;
+                    case RemoveCases.Both:
+                        File.Move($"{FolderPath}\\{leftMatch}", $"{FolderPath}\\TempFolder\\{leftMatch}");
+                        File.Move($"{FolderPath}\\{rightMatch}", $"{FolderPath}\\TempFolder\\{rightMatch}");
+                        break;
 
-                case RemoveCases.FalsePositive:
-                    break;
+                    case RemoveCases.FalsePositive:
+                        break;
+                }
             }
+            catch {}
+
             TempOfRemoved.Add(leftMatch, rightMatch);
         }
 
@@ -610,6 +586,17 @@ namespace ScaleTo16x16
                 DeleteBothButton.Enabled = true;
                 FalsePositiveButton.Enabled = true;
             });
+        }
+
+        private void DeleteTempFolder()
+        {
+            if (FolderPath != null && Directory.Exists($"{FolderPath}\\TempFolder"))
+                Directory.Delete($"{FolderPath}\\TempFolder");
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            DeleteTempFolder();
         }
     }
 }
