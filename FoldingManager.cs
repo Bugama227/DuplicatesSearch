@@ -17,8 +17,8 @@ namespace ScaleTo16x16
 
     class FoldingManager
     {
-        private string FolderPath;
         private string[] Paths;
+        private string FolderPath;
         private Dictionary<string, string> TempOfRemoved = new Dictionary<string, string>();
 
         public FoldingManager(string folderPath)
@@ -30,6 +30,16 @@ namespace ScaleTo16x16
         public string GetFolderPath()
         {
             return this.FolderPath;
+        }
+
+        public string[] GetPaths()
+        {
+            return this.Paths;
+        }
+
+        public int GetTempFilesCount()
+        {
+            return this.TempOfRemoved.Count;
         }
 
         public void CheckTemp()
@@ -47,13 +57,15 @@ namespace ScaleTo16x16
 
                 this.TempOfRemoved.Remove(this.TempOfRemoved.Keys.First());
             }
-
         }
 
-        public void RemoveSelectedFiles(RemoveCase removeCase, string leftMatch, string rightMatch)
+        public void RemoveSelectedFiles(RemoveCase removeCase)
         {
-            string leftImageFile = $"{this.FolderPath}\\{this.TempOfRemoved.Keys.Last()}";
-            string rightImageFile = $"{this.FolderPath}\\{this.TempOfRemoved.Values.Last()}";
+            var leftMatch = this.TempOfRemoved.Keys.Last();
+            var rightMatch = this.TempOfRemoved.Values.Last();
+
+            string leftImageFile = $"{this.FolderPath}\\{rightMatch}";
+            string rightImageFile = $"{this.FolderPath}\\{leftMatch}";
 
             if (!File.Exists(leftImageFile) || !File.Exists(rightImageFile)) return;
 
@@ -78,6 +90,8 @@ namespace ScaleTo16x16
                 case RemoveCase.FalsePositive:
                     break;
             }
+
+            this.TempOfRemoved.Add(leftMatch, rightMatch);
         }
 
         public void DeleteTempFolder()
@@ -86,7 +100,25 @@ namespace ScaleTo16x16
                 Directory.Delete($"{this.FolderPath}\\TempFolder");
         }
 
-        async private static string[] GetAllImagesPaths()
+        public (string, string)? Retrieve()
+        {
+            if (this.GetTempFilesCount() > 0)
+            {
+                string leftMatch = this.TempOfRemoved.Keys.Last();
+                string rightMatch = this.TempOfRemoved.Values.Last();
+
+                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{leftMatch}", $"{this.FolderPath}\\{leftMatch}");
+                FoldingHelpers.MoveIfExists($"{this.FolderPath}\\TempFolder\\{rightMatch}", $"{this.FolderPath}\\{rightMatch}");
+
+                this.TempOfRemoved.Remove(leftMatch);
+
+                return (leftMatch, rightMatch);
+            }
+
+            return null;
+        }
+
+        private static string[] GetAllImagesPaths()
         {
             return Directory
                 .GetFiles(this.FolderPath, "*.*")

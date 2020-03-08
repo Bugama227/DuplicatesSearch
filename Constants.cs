@@ -11,6 +11,5 @@ namespace ScaleTo16x16
         public const int DIMENSION_SCALE = 32;
         public const int REDUCED_IMAGE_SCALE = 16;
         public const int TEMP_AMOUNT = 3;
-
     }
 }

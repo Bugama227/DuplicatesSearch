@@ -8,28 +8,8 @@ using System.Threading.Tasks;
 
 namespace ScaleTo16x16
 {
-    
-
     class CompareHelpers
     {
-        async public static Task<string[]> GetAllImagesPaths(string folderName)
-        {
-            return await Task.Run(() =>
-            {
-                return Directory
-                    .GetFiles(folderName, "*.*")
-                    .AsParallel()
-                    .Where(s =>
-                        s.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                        s.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                        s.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                        s.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
-                        s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)
-                    )
-                    .ToArray();
-            }).ConfigureAwait(false);
-        }
-
         public static Task<(Dictionary<string, string[]>, Dictionary<string, string[]>)> SetFingerPrintsIntoDictionary(string[] paths)
         {
             return Task.Run(() =>
